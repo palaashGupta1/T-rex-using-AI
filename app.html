@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>T-Rex Dinosaur Game</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: linear-gradient(to bottom, #87CEEB 0%, #98FB98 100%);
+            font-family: 'Courier New', monospace;
+        }
+        
+        #gameContainer {
+            position: relative;
+            width: 800px;
+            height: 200px;
+            border: 2px solid #333;
+            background: linear-gradient(to bottom, #87CEEB 0%, #F5DEB3 80%, #90EE90 100%);
+            overflow: hidden;
+        }
+        
+        #ground {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            height: 20px;
+            background: repeating-linear-gradient(
+                90deg,
+                #8B4513 0px,
+                #8B4513 10px,
+                #A0522D 10px,
+                #A0522D 20px
+            );
+        }
+        
+        #trex {
+            position: absolute;
+            bottom: 20px;
+            left: 50px;
+            width: 40px;
+            height: 40px;
+            background: #4A4A4A;
+            transition: bottom 0.3s ease;
+        }
+        
+        #trex::before {
+            content: '';
+            position: absolute;
+            top: -10px;
+            left: 25px;
+            width: 15px;
+            height: 15px;
+            background: #4A4A4A;
+            border-radius: 50%;
+        }
+        
+        #trex::after {
+            content: '';
+            position: absolute;
+            top: 15px;
+            left: 45px;
+            width: 20px;
+            height: 10px;
+            background: #4A4A4A;
+        }
+        
+        .obstacle {
+            position: absolute;
+            bottom: 20px;
+        }
+        
+        /* Cactus Type 1 - Tall Single */
+        .obstacle.cactus1 {
+            width: 20px;
+            height: 50px;
+            background: #228B22;
+        }
+        
+        .obstacle.cactus1::before {
+            content: '';
+            position: absolute;
+            top: -10px;
+            left: 5px;
+            width: 10px;
+            height: 20px;
+            background: #228B22;
+        }
+        
+        .obstacle.cactus1::after {
+            content: '';
+            position: absolute;
+            top: 15px;
+            left: -8px;
+            width: 12px;
+            height: 15px;
+            background: #228B22;
+        }
+        
+        /* Cactus Type 2 - Short Wide */
+        .obstacle.cactus2 {
+            width: 25px;
+            height: 35px;
+            background: #32CD32;
+        }
+        
+        .obstacle.cactus2::before {
+            content: '';
+            position: absolute;
+            top: 5px;
+            left: -10px;
+            width: 15px;
+            height: 12px;
+            background: #32CD32;
+        }
+        
+        .obstacle.cactus2::after {
+            content: '';
+            position: absolute;
+            top: 5px;
+            right: -10px;
+            width: 15px;
+            height: 12px;
+            background: #32CD32;
+        }
+        
+        /* Rock obstacle */
+        .obstacle.rock {
+            width: 30px;
+            height: 25px;
+            background: #696969;
+            border-radius: 40% 60% 30% 70%;
+        }
+        
+        .obstacle.rock::before {
+            content: '';
+            position: absolute;
+            top: -8px;
+            left: 8px;
+            width: 14px;
+            height: 12px;
+            background: #778899;
+            border-radius: 50% 30% 60% 40%;
+        }
+        
+        /* Bush obstacle */
+        .obstacle.bush {
+            width: 35px;
+            height: 30px;
+            background: #006400;
+            border-radius: 50% 50% 0% 0%;
+        }
+        
+        .obstacle.bush::before {
+            content: '';
+            position: absolute;
+            top: -12px;
+            left: 5px;
+            width: 15px;
+            height: 15px;
+            background: #228B22;
+            border-radius: 50%;
+        }
+        
+        .obstacle.bush::after {
+            content: '';
+            position: absolute;
+            top: -8px;
+            right: 8px;
+            width: 12px;
+            height: 12px;
+            background: #32CD32;
+            border-radius: 50%;
+        }
+        
+        /* Pterodactyl (flying obstacle) */
+        .obstacle.pterodactyl {
+            width: 40px;
+            height: 20px;
+            background: #8B4513;
+            bottom: 80px;
+            border-radius: 0% 50% 50% 0%;
+        }
+        
+        .obstacle.pterodactyl::before {
+            content: '';
+            position: absolute;
+            top: -5px;
+            left: 30px;
+            width: 15px;
+            height: 8px;
+            background: #8B4513;
+            transform: rotate(-20deg);
+        }
+        
+        .obstacle.pterodactyl::after {
+            content: '';
+            position: absolute;
+            top: 12px;
+            left: 5px;
+            width: 30px;
+            height: 3px;
+            background: #654321;
+            border-radius: 50%;
+        }
+        
+        #score {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+        }
+        
+        #gameOver {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(255, 255, 255, 0.9);
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            display: none;
+        }
+        
+        #startButton {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        
+        #startButton:hover {
+            background: #45a049;
+        }
+        
+        .cloud {
+            position: absolute;
+            background: white;
+            border-radius: 50px;
+            opacity: 0.8;
+        }
+        
+        .cloud::before {
+            content: '';
+            position: absolute;
+            background: white;
+            border-radius: 50px;
+        }
+        
+        .cloud::after {
+            content: '';
+            position: absolute;
+            background: white;
+            border-radius: 50px;
+        }
+        
+        .sun {
+            position: absolute;
+            top: 20px;
+            right: 100px;
+            width: 30px;
+            height: 30px;
+            background: #FFD700;
+            border-radius: 50%;
+            box-shadow: 0 0 20px #FFD700;
+        }
+    </style>
+</head>
+<body>
+    <div id="gameContainer">
+        <div class="sun"></div>
+        <div id="ground"></div>
+        <div id="trex"></div>
+        <div id="score">Score: 0</div>
+        <div id="gameOver">
+            <h3>Game Over!</h3>
+            <p>Final Score: <span id="finalScore">0</span></p>
+            <button id="startButton">Play Again</button>
+        </div>
+    </div>
+
+    <script>
+        class TRexGame {
+            constructor() {
+                this.gameContainer = document.getElementById('gameContainer');
+                this.trex = document.getElementById('trex');
+                this.scoreElement = document.getElementById('score');
+                this.gameOverElement = document.getElementById('gameOver');
+                this.startButton = document.getElementById('startButton');
+                this.finalScoreElement = document.getElementById('finalScore');
+                
+                this.gameWidth = 800;
+                this.gameHeight = 200;
+                this.groundHeight = 20;
+                
+                this.trexX = 50;
+                this.trexY = this.groundHeight;
+                this.trexWidth = 40;
+                this.trexHeight = 40;
+                this.trexVelocityY = 0;
+                this.trexOnGround = true;
+                
+                this.obstacles = [];
+                this.obstacleTypes = [
+                    { type: 'cactus1', width: 20, height: 50, ground: true },
+                    { type: 'cactus2', width: 25, height: 35, ground: true },
+                    { type: 'rock', width: 30, height: 25, ground: true },
+                    { type: 'bush', width: 35, height: 30, ground: true },
+                    { type: 'pterodactyl', width: 40, height: 20, ground: false }
+                ];
+                this.obstacleSpeed = 5;
+                this.minSpawnDistance = 400;
+                this.maxSpawnDistance = 900;
+                
+                this.score = 0;
+                this.gameSpeed = 1;
+                this.gameRunning = false;
+                this.gameStarted = false;
+                
+                this.gravity = 0.6;
+                this.jumpForce = -15;
+                
+                this.clouds = [];
+                this.initClouds();
+                
+                this.bindEvents();
+                this.createInstructions();
+            }
+            
+            createInstructions() {
+                const instructions = document.createElement('div');
+                instructions.innerHTML = 'Press SPACE or click to jump!';
+                instructions.style.position = 'absolute';
+                instructions.style.top = '50%';
+                instructions.style.left = '50%';
+                instructions.style.transform = 'translate(-50%, -50%)';
+                instructions.style.fontSize = '18px';
+                instructions.style.color = '#333';
+                instructions.style.textAlign = 'center';
+                instructions.id = 'instructions';
+                this.gameContainer.appendChild(instructions);
+            }
+            
+            initClouds() {
+                for (let i = 0; i < 3; i++) {
+                    this.createCloud();
+                }
+            }
+            
+            createCloud() {
+                const cloud = document.createElement('div');
+                cloud.className = 'cloud';
+                cloud.style.width = '60px';
+                cloud.style.height = '20px';
+                cloud.style.top = Math.random() * 80 + 'px';
+                cloud.style.left = Math.random() * this.gameWidth + 'px';
+                
+                const beforeSize = Math.random() * 30 + 20;
+                cloud.style.setProperty('--before-width', beforeSize + 'px');
+                cloud.style.setProperty('--before-height', beforeSize + 'px');
+                cloud.style.setProperty('--before-top', '-' + beforeSize/2 + 'px');
+                cloud.style.setProperty('--before-left', '10px');
+                
+                this.gameContainer.appendChild(cloud);
+                this.clouds.push({
+                    element: cloud,
+                    x: parseInt(cloud.style.left),
+                    speed: Math.random() * 0.5 + 0.2
+                });
+            }
+            
+            bindEvents() {
+                document.addEventListener('keydown', (e) => {
+                    if (e.code === 'Space') {
+                        e.preventDefault();
+                        this.handleJump();
+                    }
+                });
+                
+                this.gameContainer.addEventListener('click', () => {
+                    this.handleJump();
+                });
+                
+                this.startButton.addEventListener('click', () => {
+                    this.startGame();
+                });
+            }
+            
+            handleJump() {
+                if (!this.gameStarted) {
+                    this.startGame();
+                    return;
+                }
+                
+                if (this.gameRunning && this.trexOnGround) {
+                    this.trexVelocityY = this.jumpForce;
+                    this.trexOnGround = false;
+                }
+            }
+            
+            startGame() {
+                this.gameRunning = true;
+                this.gameStarted = true;
+                this.score = 0;
+                this.gameSpeed = 1;
+                
+                // Clear all obstacles from previous game
+                this.clearObstacles();
+                this.obstacles = [];
+                
+                // Reset T-Rex position and physics
+                this.trexY = this.groundHeight;
+                this.trexVelocityY = 0;
+                this.trexOnGround = true;
+                
+                // Reset spawn distances
+                this.minSpawnDistance = 400;
+                this.maxSpawnDistance = 900;
+                
+                this.gameOverElement.style.display = 'none';
+                const instructions = document.getElementById('instructions');
+                if (instructions) instructions.style.display = 'none';
+                
+                this.gameLoop();
+            }
+            
+            gameLoop() {
+                if (!this.gameRunning) return;
+                
+                this.updateTRex();
+                this.updateObstacles();
+                this.updateClouds();
+                this.updateScore();
+                this.checkCollisions();
+                this.spawnObstacles();
+                
+                requestAnimationFrame(() => this.gameLoop());
+            }
+            
+            updateTRex() {
+                if (!this.trexOnGround) {
+                    this.trexVelocityY += this.gravity;
+                    this.trexY -= this.trexVelocityY;
+                    
+                    if (this.trexY <= this.groundHeight) {
+                        this.trexY = this.groundHeight;
+                        this.trexVelocityY = 0;
+                        this.trexOnGround = true;
+                    }
+                }
+                
+                this.trex.style.bottom = this.trexY + 'px';
+            }
+            
+            updateObstacles() {
+                this.obstacles.forEach((obstacle, index) => {
+                    obstacle.x -= this.obstacleSpeed * this.gameSpeed;
+                    obstacle.element.style.left = obstacle.x + 'px';
+                    
+                    if (obstacle.x + this.obstacleWidth < 0) {
+                        obstacle.element.remove();
+                        this.obstacles.splice(index, 1);
+                    }
+                });
+            }
+            
+            updateClouds() {
+                this.clouds.forEach(cloud => {
+                    cloud.x -= cloud.speed;
+                    cloud.element.style.left = cloud.x + 'px';
+                    
+                    if (cloud.x < -100) {
+                        cloud.x = this.gameWidth + 50;
+                    }
+                });
+            }
+            
+            spawnObstacles() {
+                if (this.obstacles.length === 0) {
+                    this.createObstacle();
+                } else {
+                    const lastObstacle = this.obstacles[this.obstacles.length - 1];
+                    const randomDistance = Math.random() * (this.maxSpawnDistance - this.minSpawnDistance) + this.minSpawnDistance;
+                    
+                    if (lastObstacle.x < this.gameWidth - randomDistance) {
+                        this.createObstacle();
+                    }
+                }
+            }
+            
+            createObstacle() {
+                // Randomly select obstacle type
+                const obstacleType = this.obstacleTypes[Math.floor(Math.random() * this.obstacleTypes.length)];
+                
+                const obstacle = document.createElement('div');
+                obstacle.className = `obstacle ${obstacleType.type}`;
+                obstacle.style.left = this.gameWidth + 'px';
+                
+                // Set position based on obstacle type
+                if (obstacleType.ground) {
+                    obstacle.style.bottom = this.groundHeight + 'px';
+                } else {
+                    // Flying obstacles (like pterodactyl) spawn higher
+                    const flyingHeight = Math.random() * 40 + 60; // Between 60-100px high
+                    obstacle.style.bottom = flyingHeight + 'px';
+                }
+                
+                this.gameContainer.appendChild(obstacle);
+                this.obstacles.push({
+                    element: obstacle,
+                    x: this.gameWidth,
+                    y: obstacleType.ground ? this.groundHeight : parseInt(obstacle.style.bottom),
+                    width: obstacleType.width,
+                    height: obstacleType.height,
+                    type: obstacleType.type
+                });
+            }
+            
+            checkCollisions() {
+                const trexRect = {
+                    x: this.trexX,
+                    y: this.trexY,
+                    width: this.trexWidth,
+                    height: this.trexHeight
+                };
+                
+                this.obstacles.forEach(obstacle => {
+                    const obstacleRect = {
+                        x: obstacle.x,
+                        y: obstacle.y,
+                        width: obstacle.width,
+                        height: obstacle.height
+                    };
+                    
+                    if (this.isColliding(trexRect, obstacleRect)) {
+                        this.gameOver();
+                    }
+                });
+            }
+            
+            isColliding(rect1, rect2) {
+                return rect1.x < rect2.x + rect2.width &&
+                       rect1.x + rect1.width > rect2.x &&
+                       rect1.y < rect2.y + rect2.height &&
+                       rect1.y + rect1.height > rect2.y;
+            }
+            
+            updateScore() {
+                this.score += 0.1 * this.gameSpeed;
+                this.scoreElement.textContent = `Score: ${Math.floor(this.score)}`;
+                
+                // Increase game speed over time
+                this.gameSpeed = 1 + this.score / 1000;
+                
+                // Adjust spawn distance based on score for increased difficulty
+                this.minSpawnDistance = Math.max(240, 400 - this.score / 50);
+                this.maxSpawnDistance = Math.max(500, 900 - this.score / 25);
+            }
+            
+            gameOver() {
+                this.gameRunning = false;
+                this.finalScoreElement.textContent = Math.floor(this.score);
+                this.gameOverElement.style.display = 'block';
+            }
+            
+            clearObstacles() {
+                // Remove all obstacle elements from the DOM
+                const existingObstacles = this.gameContainer.querySelectorAll('.obstacle');
+                existingObstacles.forEach(obstacle => {
+                    obstacle.remove();
+                });
+                
+                // Clear the obstacles array
+                this.obstacles = [];
+            }
+        }
+        
+        // Initialize the game when the page loads
+        window.addEventListener('load', () => {
+            new TRexGame();
+        });
+    </script>
+</body>
+</html>
